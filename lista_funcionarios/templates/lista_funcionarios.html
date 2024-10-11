@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+<!-- Block content -->
+{% block content %}
+<div class="att-container">
+  <div
+    class="title-lista-func d-flex flex-column justify-content-center align-items-center"
+  >
+    <div
+      class="title-container d-flex flex-row justify-content-center align-items-center"
+    >
+      <h1 class="text-center mt-3">Atualização Cadastral</h1>
+      <i class="material-symbols-outlined"> cloud_upload </i>
+    </div>
+    <p>Usuário {{user_usuario}}</p>
+  </div>
+
+  <div class="d-flex flex-row justify-content-center align-items-center">
+    <div class="custom-select-wrapper">
+      <select class="custom-select" id="selected-action">
+        <option selected value="">Selecione Uma Ação</option>
+        <option value="lista_funcionarios">Lista de Funcionários</option>
+        <option value="lista_rep">Lista REP</option>
+      </select>
+    </div>
+
+    <div class="custom-select-wrapper">
+      <select class="custom-select" id="selected-factory" name="select-factory">
+        <option class="text-center" selected value="">Unidade Dass</option>
+        <option value="ITB">Itaberaba</option>
+        <option value="VDC">Vitória da Conquista</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="att-lista">
+    <form
+      class="form-list d-flex flex-column justify-content-center align-items-center"
+    >
+      <h4 class="action-name"></h4>
+
+      <div class="file-upload">
+        <span class="icon">📁</span>
+        <p>Arraste e Jogue ou Clique para Enviar um Arquivo</p>
+        <input type="file" id="csv-file" name="csv-file" accept=".csv, .xlsx" />
+        <div class="file-name" id="file-name">Nenhum arquivo selecionado</div>
+      </div>
+
+      <span id="loader" class="loader"></span>
+      <button type="button" class="mt-2" id="send-file">Enviar Arquivo</button>
+
+      <!-- Colocar loading -->
+    </form>
+  </div>
+
+  <div class="alert">
+    <div class="alert-content">
+      <span>
+        <i class="material-symbols-outlined alert-icon"></i>
+        <h2 class="alert-text text-center"></h2>
+      </span>
+    </div>
+    <div class="actions">
+      <button class="close-alert">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", () => {
+    const actionName = document.querySelector(".action-name");
+    let selectedAction = document.getElementById("selected-action");
+
+    const alert = document.querySelector(".alert");
+    const alertMessage = document.querySelector(".alert-text");
+    const alertIcon = document.querySelector(".alert-icon");
+
+    selectedAction.addEventListener("change", () => {
+      if (selectedAction.value === "lista_funcionarios") {
+        actionName.innerText = "Lista De Funcionários - Arquivos .xlsx";
+      } else {
+        actionName.innerText = "Lista REP - Arquivos .csv";
+      }
+    });
+
+    const closeAlertMessage = document.querySelector(".close-alert");
+
+    if (closeAlertMessage) {
+      closeAlertMessage.addEventListener("click", () => {
+        if (alert.classList.contains("show")) {
+          alert.classList.remove("show");
+        }
+      });
+    }
+
+    // Update de documento selecionado
+    let fileInput = document.getElementById("csv-file");
+    let displayFileName = document.getElementById("file-name");
+
+    fileInput.addEventListener("change", () => {
+      const fileNameToShow = fileInput.files[0];
+      displayFileName.textContent = `Arquivo Selecionado: ${fileNameToShow.name}`;
+    });
+
+    // Loading
+    const loading = document.querySelector("#loader");
+    const inputContainer = document.querySelector(".file-upload");
+
+    const sendButton = document.getElementById("send-file");
+    sendButton.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      let selectedFactory = document.getElementById("selected-factory").value;
+      let selectedFile = fileInput.files[0];
+
+      const data = {
+        unidadeDass: selectedFactory,
+        acao: selectedAction.value,
+      };
+
+      if (!data.unidadeDass) {
+        console.error("Selecione uma Unidade Dass!");
+        alert.classList.add("show");
+        return (alertMessage.innerText = "Selecione uma Unidade Dass");
+      }
+
+      if (!data.acao) {
+        console.error("Selecione a Ação Desejada!");
+        alert.classList.add("show");
+        return (alertMessage.innerText = "Selecione a Ação Desejada");
+      }
+
+      if (!selectedFile) {
+        console.error("Selecione um arquivo!");
+        alert.classList.add("show");
+        return (alertMessage.innerText = "Selecione um arquivo");
+      }
+
+      const formData = new FormData();
+      formData.append("csv-file", selectedFile);
+
+      // Exibir animação de Loagind
+      loading.classList.add("show");
+      inputContainer.classList.add("hidden");
+
+      fetch("/lista_funcionarios/lista_func", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{csrf_token}}",
+          "X-Additional-Data": JSON.stringify(data),
+        },
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Erro ao enviar o arquivo.");
+            alert.classList.add("show");
+            return (alertMessage.innerText = "Erro ao Enviar Arquivo");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            alert.classList.add("show");
+            loading.classList.remove("show");
+            inputContainer.classList.remove("hidden");
+
+            selectedFactory = "";
+            displayFileName.textContent = "";
+            fileInput.value = "";
+            selectedAction.value = "";
+
+            return (alertMessage.innerText = data.message);
+          }
+          alert.classList.add("show");
+          return (alertMessage.innerText = data.message);
+        })
+        .catch((error) => {
+          console.log("Erro interno no servidor: ", error);
+          alert.classList.add("show");
+          alertMessage.innerText = "Erro Interno no Servidor";
+        });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+    />
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}" />
+
+    <title>Dass</title>
+  </head>
+  <body>
+    <i role="button" id="info-alert" class="material-symbols-outlined">
+      info
+    </i>
+
+    <header>
+      <nav class="nav-bar">
+        <a href="/lista_funcionarios">Home</a>
+        <a href="/lista_funcionarios/lista_func">Atualizar Lista</a>
+        <a href="/lista_funcionarios/login">Login</a>
+        <a href="/lista_funcionarios/logout">Logout</a>
+        <label class="switch">
+          <input type="checkbox" id="mode-switch" />
+          <span class="slider"></span>
+        </label>
+      </nav>
+      <i role="button" id="menu-icon" class="material-symbols-outlined">
+        menu
+      </i>
+    </header>
+    <div id="overlay"></div>
+    <main class="d-flex flex-column justify-content-center align-items-center">
+      <div class="info-files">
+        <h3>
+          <span class="material-symbols-outlined">info</span> Informações sobre
+          conteúdo dos arquivos
+        </h3>
+        <div class="info-content">
+          <p>
+            O conteúdo deve estar conforme o padrão, caso contrário a operação
+            irá dar errado. Baixe os modelos padrão que seus arquivos devem
+            seguir:
+          </p>
+          <div class="buttons">
+            <button id="download-lista">
+              <span class="material-symbols-outlined">download</span>
+              Download Modelos
+            </button>
+          </div>
+        </div>
+      </div>
+      {% block content %}
+      <!-- O conteúdo específico da página será inserido aqui -->
+      {% endblock %}
+    </main>
+
+    <footer
+      class="d-flex flex-column justify-content-center align-items-center"
+    >
+      <p>Desenvolvido por Dass SEST © Hendrius Félix</p>
+      <p>
+        Qualquer Dúvida ou Relato de Bugs -
+        <a href="https://mail.google.com/chat/u/0/#chat" target="_blank"
+          >Entre em Contato</a
+        >
+      </p>
+    </footer>
+
+    <script type="text/javascript">
+      // Download Files
+      const downloadButton = document.querySelector("#download-lista");
+
+      downloadButton.addEventListener("click", () => {
+        fetch("/lista_funcionarios/download", {
+          method: "GET",
+        })
+          .then((response) => {
+            if (!response.ok)
+              return console.error("Erro na solicitação de download");
+            return response.blob();
+          })
+          .then((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "lista.rar";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          })
+          .catch((error) => {
+            console.error("Erro ao baixar arquivo: ", error);
+          });
+      });
+
+      const overlay = document.querySelector("#overlay");
+      const infoAlertButon = document.querySelector("#info-alert");
+      const infoContainer = document.querySelector(".info-files");
+      infoAlertButon.addEventListener("click", () => {
+        infoContainer.classList.toggle("show");
+        overlay.classList.toggle("show");
+      });
+
+      const menuIcon = document.getElementById("menu-icon");
+      const menu = document.querySelector(".nav-bar");
+
+      menuIcon.addEventListener("click", () => {
+        menu.classList.toggle("show");
+        menuIcon.classList.toggle("show");
+      });
+
+      // DarkMode
+      const checkbox = document.getElementById("mode-switch");
+      const body = document.body;
+      const h1 = document.querySelectorAll("h1");
+
+      checkbox.addEventListener("change", () => {
+        if (body.classList.contains("dark-mode")) {
+          body.classList.remove("dark-mode");
+          h1.forEach((e) => {
+            e.classList.remove("dark-mode");
+          });
+          menuIcon.classList.remove("dark-mode");
+        } else {
+          body.classList.add("dark-mode");
+          h1.forEach((e) => {
+            e.classList.add("dark-mode");
+          });
+          menuIcon.classList.add("dark-mode");
+        }
+      });
+    </script>
+  </body>
+</html>

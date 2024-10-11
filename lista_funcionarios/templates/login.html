@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+<!-- Block content -->
+{% block content %}
+<div
+  class="login-container d-flex flex-column justify-content-center align-items-center"
+>
+  <div
+    class="container-login d-flex flex-column justify-content-center align-items-center"
+  >
+    <form
+      class="d-flex flex-column justify-content-center align-items-center"
+      id="login-form"
+    >
+      <h1 class="text-center">Login</h1>
+
+      <div class="input-container">
+        <input id="user" type="text" placeholder="Usuário" />
+        <input id="password" type="password" placeholder="Senha" />
+        <input id="login-button" type="button" value="Entrar" />
+      </div>
+    </form>
+  </div>
+
+  <div class="alert">
+    <div class="alert-content">
+      <span>
+        <i class="material-symbols-outlined alert-icon"></i>
+        <h2 class="alert-text text-center"></h2>
+      </span>
+    </div>
+    <div class="actions">
+      <button class="close-alert">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  const alert = document.querySelector(".alert");
+  const alertMessage = document.querySelector(".alert-text");
+  const alertIcon = document.querySelector(".alert-icon");
+
+  const closeAlertMessage = document.querySelector(".close-alert");
+
+  if (closeAlertMessage) {
+    closeAlertMessage.addEventListener("click", () => {
+      if (alert.classList.contains("show")) {
+        alert.classList.remove("show");
+      }
+    });
+  }
+
+  document.getElementById("login-button").addEventListener("click", (event) => {
+    event.preventDefault();
+
+    const user = document.querySelector("#user").value;
+    const password = document.querySelector("#password").value;
+    const loginResponse = document.getElementById("login-response");
+
+    fetch("/lista_funcionarios/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{csrf_token}}",
+      },
+      body: JSON.stringify({
+        user: user,
+        password: password,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Erro ao efetuar login");
+          alert.classList.add("show");
+          return (alertMessage.innerText = "Erro ao efetuar login!");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        if (!data.success) {
+          alert.classList.add("show");
+          return (alertMessage.innerText = data.message);
+        }
+
+        alert.classList.add("show");
+        alertMessage.innerText = data.message;
+
+        setTimeout(() => {
+          window.location.href = data.redirect_url;
+        }, 1500);
+      })
+      .catch((error) => {
+        console.error("Erro:", error);
+        alert.classList.add("show");
+        return (alertMessage.innerText = data.message);
+      });
+  });
+</script>
+{% endblock %}
