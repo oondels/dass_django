@@ -1,0 +1,11 @@
+services:
+  lista_funcionarios:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dass-django-lista-funcionarios:1.0
+    ports:
+      - "1111:1111"
+    volumes:
+      - .:/app
+    command: python manage.py runserver 0.0.0.0:1111
